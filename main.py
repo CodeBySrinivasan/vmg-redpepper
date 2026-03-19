@@ -47,4 +47,4 @@ async def remove_background(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     # Standard FastAPI port
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=7860)
