@@ -158,28 +158,31 @@
             placeholder.classList.add('hidden');
             loading.classList.remove('hidden');
             imageGrid.classList.remove('hidden');
-            statusText.innerText = `Processing batch of ${files.length} via Redpepper Pro...`;
+            statusText.innerText = `Preparing batch of ${files.length} via Redpepper Pro...`;
 
             try {
                 const startTime = performance.now();
                 
-                const promises = files.map(async (file) => {
+                // STABLE SEQUENTIAL PROCESSING
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    statusText.innerText = `Processing asset ${i + 1} of ${files.length}: ${file.name}`;
+                    
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    const response = await fetch('http://127.0.0.1:8000/remove-bg', {
+                    // RELATIVE PATH FOR DOCKER/HF COMPATIBILITY
+                    const response = await fetch('/remove-bg', {
                         method: 'POST',
                         body: formData
                     });
 
-                    if (!response.ok) throw new Error("Processing error");
+                    if (!response.ok) throw new Error(`Error processing ${file.name}`);
                     
                     const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
                     renderImage(url, file.name);
-                });
-
-                await Promise.all(promises);
+                }
                 
                 const endTime = performance.now();
                 const duration = ((endTime - startTime) / 1000).toFixed(2);
@@ -188,7 +191,7 @@
 
             } catch (err) {
                 console.error(err);
-                statusText.innerText = "Engine Error: Verify Python API connection.";
+                statusText.innerText = "Engine Error: Background isolation failed.";
             } finally {
                 loading.classList.add('hidden');
             }
